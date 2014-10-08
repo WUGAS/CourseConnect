@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<link href="{{url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet">
+	<link href="{{url_for('static', filename='css/index.css')}}" rel="stylesheet">
+	<link href="{{url_for('static', filename='css/fullcalendar.css')}}" rel='stylesheet'/>
+
+	<body>
+		<div class="navbar navbar-inverse navbar-purple navbar-fixed-top" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="sr-only">Toggle navigation</span>
+					</button>
+					<a href="index" style="color:#ffffff;" class="navbar-brand">Course Connect</a>
+				</div>
+				<div class="collapse navbar-collapse">
+					<ul class="nav navbar-nav">
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="container main panel-opacity">
+		<div class="col-sm-4">
+			<div class="panel-margin panel panel-default">
+				<h3>Search or browse classes</h3>
+				<h5>Choose a term for searching and browsing:</h5>
+				<select id="terms" class="form-control">
+				</select>
+				<h5>Search:</h5>
+				<div class="form-group">
+					<input autocomplete="off" type="text" class="form-control" id="classes" placeholder="Search classes!">
+				</div>
+				<h5>Browse by department:</h5>
+				<select id="departments" class="form-control browse-dropdown">
+				</select>
+				<p></p>
+				<ul id="class-list" class="list-group">
+					<a class="list-group-item active">List of Classes<div id="spinner" class="pull-right"></div></a>
+				</ul>
+			</div>
+		</div>
+		<div class="col-sm-8">
+			<div class="panel-margin panel panel-default">
+				<h3>Calendar:</h3>
+				<div id="calendar">
+				</div>
+				<h4>Schedule:</h4>
+				<ul id="schedule" class="list-group">
+					<a class="list-group-item">No classes selected...</a>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
+	<script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+	<script src="{{url_for('static', filename='js/typeahead.js')}}"></script>
+	<script src="{{url_for('static', filename='js/index.js')}}"></script>
+	<script src="{{url_for('static', filename='js/algorithms.js')}}"></script>
+	<script src="{{url_for('static', filename='js/spin.min.js')}}"></script>
+	<script src="{{url_for('static', filename='js/fullcalendar.js')}}"></script>
+	<script>
+
+	$('#calendar').fullCalendar({
+		minTime: 7,
+		maxTime: 24,
+	});
+	$('#calendar').fullCalendar('changeView', 'agendaWeek');
+	$(".fc-header").hide();
+
+	var spinner = new Spinner({
+		radius: 6,
+		width: 3
+	}).spin($("#spinner").get(0));
+
+	$('#spinner').hide();
+	$.ajax({
+		url: "departments",
+		success: function(data) {
+			$($.parseJSON(data)).map(function() {
+				$('#departments').append($('<option>').val(this.symbol).text(this.name));
+			});
+		}
+	});
+
+	// $(window).scroll(function(){
+	// 	if($(".fixed").height() + 60 < $(window).height()) {
+	// 		$(".fixed").css("top", Math.max(55, 55 - $(this).scrollTop()));
+	// 		$(".fixed").css("position", "fixed");
+	// 	} else {
+	// 		if($(this).scrollTop() < $(window).height() - $(".fixed").height()) {
+	// 			$(".fixed").css("top", "");
+	// 			$(".fixed").css("position", "absolute");
+	// 		} else {
+	// 			$(".fixed").css("top", Math.max($(window).height() - $(".fixed").height() - 15, 55 - $(this).scrollTop()));
+	// 			$(".fixed").css("position", "fixed");
+	// 		}
+	// 	}
+	// });
+
+$.ajax({
+	url: "terms",
+	success: function(data) {
+		$($.parseJSON(data)).map(function() {
+			$('#terms').append($('<option>').val(this.term_id).text(this.name));
+		});
+		changeTypeAHead();
+	}
+});
+
+$("#terms").change(function() {
+	$("#class-list").html('<a class="list-group-item active">List of Classes</a>');
+	changeTypeAHead();
+});
+
+function changeTypeAHead() {
+	$.ajax({
+		data: {
+			term_id: $("#terms").val()
+		},
+		url: "course_terms",
+		success: function(data) {
+			data = data.split("|");
+			courseIDs = [];
+			typeAHeadNames = [];
+
+			for (var i = 0; i < data.length; i++) {
+				var str = data[i].toString();
+				var arr = str.split("~");
+				courseIDs.push(parseInt(arr[0]));
+				typeAHeadNames.push(arr[1]);
+			}
+
+			$('#classes').typeahead('destroy');
+				//allows autocomplete for classes
+				$("#classes").typeahead({
+					displayKey: 'value',
+					source: typeAHeadNames,
+					items: 10,
+					updater: function(course) {
+						var id = courseIDs[typeAHeadNames.indexOf(course)];
+						addClass({
+							name: "NONE",
+							id: id
+						});
+					}
+				});
+			}
+		});
+}
+
+$(".browse-dropdown").change(function() {
+	$('#spinner').show();
+	$("#class-list").html('<a class="list-group-item active">List of Classes</a>');
+	$.ajax({
+		url: "courses",
+		data: {
+			term: $('#terms').val(),
+			subject: $('#departments').val()
+		},
+		success: function(data) {
+			$('#spinner').hide();
+			$('#class-list').html('<a class="list-group-item active">List of Classes<div id="spinner" class="pull-right"></div></a>');
+			var obj = $.parseJSON(data);
+
+			if (obj.length == 0) {
+				$('#class-list').append('<a href="#" class="list-group-item">No classes available</a>');
+			} else {
+				$(obj).map(function() {
+					$('#class-list').append('<a href="#' + this.subject + ' ' + this.catalog_num + '" id="' + this.id + '" class="class-list-item list-group-item"><dl><dt>' + this.subject + ' ' + this.catalog_num + ' - ' + this.title + ' - ' + this.section + '</dt><dd>' + this.instructor.name + '</dd></dl></a>');
+				});
+			}
+
+			$(".class-list-item").click(function() {
+				addClass({
+					name: $(this).attr("href").replace("#", ""),
+					id: $(this).attr("id")
+				});
+			});
+		}
+	})
+});
+
+	//builds course array
+	var crs = "{{crs}}";
+	crs = crs.split("|");
+
+	var courses = [];
+	var courseNames = [];
+	var typeAHeadNames = [];
+	var classes = [];
+	var id = 1;
+
+	for (var i = 0; i < crs.length; i++) {
+		var course = crs[i].split("::");
+		courses.push(course);
+		courseNames.push(course[0] + " " + course[1]);
+		typeAHeadNames.push(course[0] + " " + course[1] + " - " + course[9]);
+	}
+
+	//allows autocomplete for classes
+	$("#classes").typeahead({
+		displayKey: 'value',
+		source: typeAHeadNames,
+		items: 10,
+		updater: function(course) {
+			var crs = courseNames[typeAHeadNames.indexOf(course)];
+			addClass({
+				name: crs
+			});
+		}
+	});
+
+	function addClassCallBack(obj) {
+		var days = parseDays(obj.days);
+		var color = getRandomColor();
+		for (var i = 0; i < days.length; i++) {
+			var startTime = obj.startTime.split(":");
+			var endTime = obj.endTime.split(":");
+
+			for (var j = 0; j < startTime.length; j++) {
+				startTime[j] = parseInt(startTime[j]);
+			}
+			for (var j = 0; j < endTime.length; j++) {
+				endTime[j] = parseInt(endTime[j]);
+			}
+
+			var startDate = new Date();
+			startDate.setHours(startTime[0]);
+			startDate.setMinutes(startTime[1]);
+			startDate.setSeconds(startTime[2]);
+
+			var endDate = new Date();
+			endDate.setHours(endTime[0]);
+			endDate.setMinutes(endTime[1]);
+			endDate.setSeconds(endTime[2]);
+
+			var currentDay = startDate.getDay();
+			var distance = (days[i] + 7 - currentDay) % 7;
+
+			startDate.setDate(startDate.getDate() + distance);
+			endDate.setDate(endDate.getDate() + distance);
+
+			var evnt = {
+				id: id,
+				allDay: false,
+				start: startDate,
+				end: endDate,
+				title: obj.department + ' ' + obj.courseNumber,
+				color: color
+			};
+
+			$('#calendar').fullCalendar('renderEvent', evnt);
+		}
+
+		classes.push({
+			id: id,
+			name: obj.department + ' ' + obj.courseNumber,
+			department: obj.department,
+			title: obj.title
+		});
+
+		id++;
+
+		//rebuild schedule
+		$("#schedule").html('');
+		for (var i = 0; i < classes.length; i++) {
+			$("#schedule").append('<a id=class' + classes[i].id + ' class="list-group-item">' + classes[i].name + ' - ' + classes[i].title + '<button href="#class' + classes[i].id + '" class="pull-right btn btn-default remove"><span class="glyphicon glyphicon-remove"</span></button></a>');
+			$("#classes").val('');
+		}
+
+		$(".remove").click(function() {
+			var theID = parseInt($(this).attr("href").replace("#class", ""), 10);
+
+			$('#calendar').fullCalendar('removeEvents', theID);
+
+			var index = findWithAttr(classes, 'id', theID);
+			classes.splice(index, 1);
+			$($(this).attr("href")).remove();
+
+			if (classes.length == 0) {
+				$("#schedule").append('<a class="list-group-item">No classes selected...</a>');
+			}
+		});
+	}
+
+	function getRandomColor() {
+		var letters = '0123456789ABCDEF'.split('');
+		var color = '#';
+		for (var i = 0; i < 6; i++ ) {
+			color += letters[Math.floor(Math.random() * 16)];
+		}
+		return color;
+	}
+
+	function addClass(course) {
+		if (findWithAttr(classes, 'name', course.name) < 0) {
+			var ii = courseNames.indexOf(course.name);
+			var obj;
+			console.log(ii);
+			if (ii >= 0) {
+				obj = generateCourse(courses[ii]);
+				addClassCallBack(obj);
+			} else {
+				$.ajax({
+					url: "courses_by_id",
+					data: {
+						id: course.id
+					},
+					success: function(data) {
+						data = $.parseJSON(data)[0];
+						obj = {
+							department: data.subject,
+							courseNumber: data.catalog_num,
+							title: data.title,
+							professor: data.instructor.name,
+							location: data.room,
+							startTime: data.start_time,
+							endTime: data.end_time,
+							days: data.meeting_days,
+							section: data.section,
+						};
+						if (findWithAttr(classes, 'name', obj.title) < 0) {
+							addClassCallBack(obj);	
+						}
+					}
+				});
+			}
+		}
+	}
+
+	function generateCourse(course) {
+		return {
+			department: course[0],
+			courseNumber: course[1],
+			title: course[9],
+			professor: course[10],
+			location: course[11],
+			startTime: course[12],
+			endTime: course[13],
+			days: course[14]
+		}
+	}
+
+	function parseDays(days) {
+		var daynums = [];
+		var dayArray = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+		for (var i = 0; i < dayArray.length; i++) {
+			var day = dayArray[i];
+			if (days.indexOf(day) >= 0) {
+				daynums.push(i + 1);
+			}
+		}
+		return daynums;
+	}
+
+	function findWithAttr(array, attr, value) {
+		for (var i = 0; i < array.length; i += 1) {
+			if (array[i][attr] === value) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+	</script>
+</body>
+</html>

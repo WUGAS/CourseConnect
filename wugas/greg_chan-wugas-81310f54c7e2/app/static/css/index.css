@@ -1,0 +1,44 @@
+body {
+	background-image:url('/static/imgs/arch_opacity.png');
+	background-color:#cccccc;
+	background-size:100%;
+}
+
+.panel-opacity {
+	opacity: 0.9;
+}
+
+.everything-else {
+	opacity: 1.0;
+}
+
+.main {
+	margin-top: 55px;
+}
+
+.center {
+	text-align: center;
+}
+
+.btn {
+	margin: 4px;
+}
+
+.navbar-purple {
+	/*background-color: #520063;*/
+}
+
+.panel-margin {
+	border-radius:5px;
+	padding: 5px;
+}
+
+.panel-margin-top {
+	padding-top: 0px;
+}
+
+.remove {
+	height: 30px;
+	margin-top: -5px;
+	margin-right: -10px;
+}

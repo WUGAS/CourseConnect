@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Highcharts Example</title>
+
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+		<script type="text/javascript">
+$(function () {
+
+	$('#container').highcharts({
+	            
+	    chart: {
+	        polar: true,
+	        type: 'line'
+	    },
+	    
+	    title: {
+	        text: 'EECS 213 VS EECS 214',
+	        x: -80
+	    },
+	    
+	    pane: {
+	    	size: '80%'
+	    },
+	    
+	    xAxis: {
+	        categories: ['Fulfillment', 'Workload', 'Clarity of Instruction', 'Happiness', 'Quality of Course', 
+	                'Degree of Intelectual Stimulation', 'Amount Learned'],
+	        tickmarkPlacement: 'on',
+	        lineWidth: 0
+	    },
+	        
+	    yAxis: {
+	        gridLineInterpolation: 'polygon',
+	        lineWidth: 0,
+	        min: 0
+	    },
+	    
+	    tooltip: {
+	    	shared: true,
+	        pointFormat: '<span style="color:{series.color}">{series.name}: <b>${point.y:,.0f}</b><br/>'
+	    },
+	    
+	    legend: {
+	        align: 'right',
+	        verticalAlign: 'top',
+	        y: 70,
+	        layout: 'vertical'
+	    },
+	    
+	    series: [{
+	        name: 'EECS 213',
+	        data: [3,2.5,1,1.7,2,2.5,3],
+	        pointPlacement: 'on'
+	    }, {
+	        name: 'EECS 214',
+	        data: [3,2.4,1.5,2.1,2.4,2.2,3],
+	        pointPlacement: 'on'
+	    }]
+	
+	});
+});
+		</script>
+	</head>
+	<body>
+<script src="../../js/highcharts.js"></script>
+<script src="../../js/highcharts-more.js"></script>
+<script src="../../js/modules/exporting.js"></script>
+
+<div id="container" style="min-width: 400px; max-width: 600px; height: 400px; margin: 0 auto"></div>
+
+	</body>
+</html>
